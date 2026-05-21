@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Project Pulse - Interactive Media & Polling Platform
 
-## Getting Started
+Project **Socials** is a dynamic, social media and interactive web application designed to merge high-fidelity rich media sharing with deep, real-time community engagement. Users can seamlessly share media and interact with highly configurable polls, offering features beyond traditional static platforms such as option-specific reactions, live analytics, and fluid vote modification.
 
-First, run the development server:
+## 🚀 Core Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### 👤 User Identity & Experience
+- **Secure Authentication:** Quick sign-up and login via Email/Password, Google OAuth, and Apple ID.
+- **Dynamic User Profiles:** Customizable bios, avatars, and a dedicated timeline tracking all user posts, cast votes, and active polls.
+- **Tactile UI/UX:** Built-in micro-interactions and instant feedback loops tailored for mobile web environments.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 📸 Rich Media Posting
+- **Multi-Format Uploads:** Support for single or multiple high-resolution images (JPEG, PNG) and compressed video formats (MP4, MOV up to 60 seconds).
+- **Infinite Scroll Feed:** A unified feed with lazy-loading and smart-caching mechanisms optimizing media asset delivery.
+- **Standard Social Interactions:** Full system capabilities for liking, nested commenting, and cross-platform sharing.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 🗳️ Advanced Interactive Polling System
+- **Multimedia Polls:** Post creators can establish text-based, image-based, or video-based options (up to 6 choices) with customizable expiration timers.
+- **Multi-Operation Voting:** Voters have the autonomy to cast their vote, retract a selection, or switch choices at any time prior to poll expiration.
+- **Real-Time WebSocket Sync:** Live processing updates percentages instantaneously as votes roll in, utilizing dual-channel data push mechanisms.
+- **Granular Emoji Reactions:** Users can react with expressive emojis globally to the poll, or contextually to **individual options** inside the poll.
+- **Creator Dashboard Analytics:** Visual representations of anonymized demographic information, regional statistics, and engagement spikes.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠️ System Architecture & Tech Stack
 
-## Learn More
+Pulse is engineered with a decoupled, horizontally scalable system architecture ensuring high availability and sub-200ms latency.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Frontend:** Next.js (TypeScript) optimized with Tailwind CSS and Zustand for global state management.
+- **Backend:** Next.js (TypeScript) API Routes for core business logic.
+- **Real-Time Engine:** Socket.io / WebSockets for pub/sub instantaneous data streaming.
+- **Databases:** - PostgreSQL (Relational schema for transactional data: Profiles, Media paths, Post tracking).
+  - Redis (In-memory caching for active polling counters, preventing database bottlenecks).
+- **Media Architecture:** AWS S3 or Cloudinary storage, coupled with an automated transcoding pipeline (HLS streaming) to scale resolution to variable internet speeds.
