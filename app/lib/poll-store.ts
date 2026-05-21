@@ -1,5 +1,5 @@
 import { db } from './db';
-import { pollsTable, pollsOptionsTable, followedUsersTable, groupsTable, groupMembersTable } from '../db/schema';
+import { pollsTable, pollsOptionsTable, followedUsersTable, groupsTable, groupMembersTable, usersTable } from '../db/schema';
 import { desc, sql, eq, and } from 'drizzle-orm';
 
 export interface Poll {
@@ -65,14 +65,11 @@ class PollStore {
         };
     }
 
-    public async createPoll(userId: string, question: string,
-        mediaUrl: string | null, options: string[], groupId?: string): Promise<Poll> {
+    public async createPoll(userId: string, question: string, mediaUrl: string | null,
+        groupId?: string): Promise<Poll> {
 
         // Validating the poll
-        // 1. Question must not be empty.
-        // 2. User ID must not be empty.
-        // 3. Options must not be empty and must be at least 2.
-        if (!question.trim() || !options || !userId || options.length <= 1) {
+        if (!question.trim() || !userId) {
             throw new Error("Poll validation failed, please check your inputs.");
         }
 
@@ -83,12 +80,17 @@ class PollStore {
             groupId: groupId ?? null
         }).returning();
 
-        const pollOptions = await db.insert(pollsOptionsTable).values(options.map(option => ({
-            pollId: inserted.id,
-            text: option
-        }))).returning();
+        return this.mapToPoll(inserted, []);
+    }
 
-        return this.mapToPoll(inserted, pollOptions.map(this.mapToPollOption));
+    public async createPollOption(pollId: string, text: string, mediaUrl: string | null): Promise<PollOption> {
+        const [inserted] = await db.insert(pollsOptionsTable).values({
+            pollId,
+            text,
+            mediaUrl
+        }).returning();
+
+        return this.mapToPollOption(inserted);
     }
 
     // TODO: fetch only the public group polls or polls of the users the current user is following
@@ -154,29 +156,41 @@ class PollStore {
     public async getPollById(userId: string, pollId: string): Promise<Poll> {
         const [poll] = await db.select().from(pollsTable)
             .where(eq(pollsTable.id, pollId));
-        // User can the poll only if
+
+        if (!poll) {
+            throw new Error("Poll not found");
+        }
+
+        // Check if user is authorized to view the poll
         // 1. The profile of the poll's owner is public 
         // 2. OR the user is following the poll's owner
         // 3. OR the poll's group is public (if the poll is in a group)
         // 4. OR the user is a member of the poll's group (if the poll is in a group)
         let isAuthorized = poll.userId === userId;
         if (!isAuthorized) {
-            // 1. Check if the user is following the poll's owner
             if (!poll.groupId) {
-                const [followedUser] = await db.select().from(followedUsersTable)
-                    .where(and(eq(followedUsersTable.followerId, userId), eq(followedUsersTable.followingId, poll.userId)));
-                if (followedUser) {
+                // 1. Check if the user is following the poll's owner
+                const [user] = await db.select().from(usersTable)
+                    .where(eq(usersTable.id, poll.userId));
+                if (user.isPublic) {
                     isAuthorized = true;
+                    // 2. OR the user is following the poll's owner
+                } else {
+                    const [followedUser] = await db.select().from(followedUsersTable)
+                        .where(and(eq(followedUsersTable.followerId, userId), eq(followedUsersTable.followingId, poll.userId)));
+                    if (followedUser) {
+                        isAuthorized = true;
+                    }
                 }
             }
-            // 2. Check if the poll's group is public  
+            // 3. Check if the poll's group is public  
             else if (poll.groupId) {
                 const [group] = await db.select().from(groupsTable)
                     .where(eq(groupsTable.id, poll.groupId));
                 if (group.isPublic) {
                     isAuthorized = true;
                 }
-                // 3. OR the user is a member of the poll's group
+                // 4. OR the user is a member of the poll's group
             } else {
                 const [groupMember] = await db.select().from(groupMembersTable)
                     .where(and(eq(groupMembersTable.groupId, poll.groupId), eq(groupMembersTable.userId, userId)));
