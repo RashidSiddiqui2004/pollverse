@@ -1,4 +1,4 @@
-import { integer, pgTable, timestamp, varchar, boolean, pgEnum, uuid } from "drizzle-orm/pg-core";
+import { integer, pgTable, timestamp, varchar, boolean, pgEnum, uuid, text } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 const timestamps = {
@@ -10,14 +10,15 @@ export const reactionTypeEnum = pgEnum("reaction_type", ["funny", "like", "love"
 
 const usersTable = pgTable("users", {
     id: uuid("id").primaryKey().defaultRandom(),
-    name: varchar({ length: 255 }).notNull(),
-    userName: varchar({ length: 100 }).notNull().unique(),
+    name: text("name").notNull(),
+    email: text("email").notNull().unique(),
+    userName: varchar({ length: 100 }).unique(),
     // age: integer().notNull(),
-    email: varchar({ length: 255 }).notNull().unique(),
-    header: varchar({ length: 255 }).notNull(),
-    bio: varchar({ length: 455 }).notNull(),
-    isPublic: boolean().default(true).notNull(), // if false, user's profile will not be visible to anyone
-    // avatarUrl: varchar({ length: 1000 }).default(),
+    header: varchar({ length: 255 }).default(""),
+    bio: varchar({ length: 455 }).default(""),
+    isPublic: boolean().default(true).notNull(),
+    avatarUrl: varchar({ length: 1000 }).default(""),
+    onboardingCompleted: boolean("onboarding_completed").default(false).notNull(),
     ...timestamps
 });
 
@@ -35,6 +36,7 @@ const pollsTable = pgTable("polls", {
     mediaUrl: varchar({ length: 1000 }),
     userId: uuid("user_id").notNull().references(() => usersTable.id),
     groupId: uuid("group_id").references(() => groupsTable.id),
+    isMultiVotingAllowed: boolean().default(false),
     ...timestamps
 });
 
@@ -47,6 +49,7 @@ const pollsOptionsTable = pgTable("polls_options", {
     ...timestamps
 });
 
+// User can cast their vote on a poll.
 const votesTable = pgTable("votes", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     pollId: uuid("poll_id").notNull().references(() => pollsTable.id),
@@ -55,7 +58,7 @@ const votesTable = pgTable("votes", {
     ...timestamps
 });
 
-// User can react either on a poll or on a poll option
+// User can react either on a poll or on a poll option.
 const reactionsTable = pgTable("reactions", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     userId: uuid("user_id").notNull().references(() => usersTable.id),
@@ -99,7 +102,7 @@ const usersRelations = relations(usersTable, ({ many }) => ({
     followers: many(followedUsersTable, { relationName: "follower" }),
     following: many(followedUsersTable, { relationName: "following" }),
     administeredGroups: many(groupsTable, { relationName: "groupAdmin" }),
-    groupMemberships: many(groupMembersTable)
+    groupMemberships: many(groupMembersTable),
 }));
 
 const followedUsersRelations = relations(followedUsersTable, ({ one }) => ({

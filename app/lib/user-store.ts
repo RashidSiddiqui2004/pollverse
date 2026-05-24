@@ -10,6 +10,8 @@ export interface User {
     header: string;
     bio: string;
     isPublic: boolean;
+    avatarUrl: string;
+    onboardingCompleted: boolean;
     createdAt: string;
     updatedAt: string | null;
 }
@@ -30,6 +32,10 @@ class UserStore {
         return {
             ...t,
             id: String(t.id),
+            userName: t.userName ?? "",
+            header: t.header ?? "",
+            bio: t.bio ?? "",
+            avatarUrl: t.avatarUrl ?? "",
             createdAt: t.createdAt.toISOString(),
             updatedAt: t.updatedAt?.toISOString() ?? null,
         };
@@ -41,6 +47,7 @@ class UserStore {
         email: string;
         header: string;
         bio: string;
+        avatarUrl: string;
         isPublic?: boolean;
     }): Promise<User> {
         if (!data.name.trim() || !data.userName.trim() || !data.email.trim()) {
@@ -51,9 +58,11 @@ class UserStore {
             name: data.name,
             userName: data.userName,
             email: data.email,
-            header: data.header,
-            bio: data.bio,
+            header: data.header ?? "",
+            bio: data.bio ?? "",
             isPublic: data.isPublic ?? true,
+            avatarUrl: data.avatarUrl ?? "",
+            onboardingCompleted: false,
         }).returning();
 
         return this.mapToUser(inserted);
@@ -69,14 +78,19 @@ class UserStore {
         return user ? this.mapToUser(user) : null;
     }
 
+    public async getUserByEmail(email: string): Promise<User | null> {
+        const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+        return user ? this.mapToUser(user) : null;
+    }
+
     public async checkIfExistsByEmail(email: string): Promise<boolean> {
         const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
-        return !!user;
+        return Boolean(user);
     }
 
     public async checkIfExistsByUsername(userName: string): Promise<boolean> {
         const [user] = await db.select().from(usersTable).where(eq(usersTable.userName, userName));
-        return !!user;
+        return Boolean(user);
     }
 
     public async updateUser(userId: string, data: Partial<{
@@ -139,7 +153,7 @@ class UserStore {
                 eq(followedUsersTable.followerId, followerId),
                 eq(followedUsersTable.followingId, followingId)
             ));
-        return !!follow;
+        return Boolean(follow);
     }
 }
 

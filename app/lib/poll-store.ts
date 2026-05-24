@@ -1,5 +1,5 @@
 import { db } from './db';
-import { pollsTable, pollsOptionsTable, followedUsersTable, groupsTable, groupMembersTable, usersTable } from '../db/schema';
+import { pollsTable, pollsOptionsTable, votesTable, followedUsersTable, groupsTable, groupMembersTable, usersTable } from '../db/schema';
 import { desc, sql, eq, and } from 'drizzle-orm';
 
 export interface Poll {
@@ -14,17 +14,13 @@ export interface Poll {
 };
 
 export interface PollOption {
-    id: string,
+    id: number,
     pollId: string,
     text: string,
     mediaUrl: string | null,
+    voteCount: number,
     createdAt: string,
     updatedAt: string | null
-};
-
-export interface PollOptionWithCounts extends PollOption {
-    voteCount: number;
-    percentage: number;
 };
 
 class PollStore {
@@ -58,7 +54,6 @@ class PollStore {
     private mapToPollOption(t: typeof pollsOptionsTable.$inferSelect): PollOption {
         return {
             ...t,
-            id: String(t.id),
             pollId: String(t.pollId),
             createdAt: t.createdAt.toISOString(),
             updatedAt: t.updatedAt?.toISOString() ?? null
@@ -93,7 +88,8 @@ class PollStore {
         return this.mapToPollOption(inserted);
     }
 
-    // TODO: fetch only the public group polls or polls of the users the current user is following
+    // TODO: fetch only the public group polls or polls of the users the current user is following.
+    // Or polls of public profiles.
     public async getPolls(page: number = 1, pageSize: number = this.PAGE_SIZE): Promise<{
         polls: Poll[],
         totalPolls: number
@@ -210,6 +206,31 @@ class PollStore {
         return this.mapToPoll(poll, pollOptions.map(this.mapToPollOption));
     }
 
+    public async votePollOption(userId: string, pollId: string, optionId: number): Promise<boolean> {
+        // Check if user has already voted for this poll.
+        const [existingVote] = await db.select().from(votesTable)
+            .where(and(eq(votesTable.userId, userId), eq(votesTable.pollId, pollId)));
+        
+        if (Boolean(existingVote)) {
+            throw new Error("You have already voted for this poll");
+        }
+
+        // Add vote to the option.
+        await db.insert(votesTable).values({
+            userId: userId,
+            pollId: pollId,
+            optionId: optionId
+        });
+
+        // Update vote count of the option.
+        // This should be an atomic operation. (Handle concurent votes)
+        await db.update(pollsOptionsTable).set({
+            voteCount: sql`${pollsOptionsTable.voteCount} + 1`
+        }).where(eq(pollsOptionsTable.id, optionId));
+
+        return true;
+    }
+
     public async deletePoll(userId: string, pollId: string): Promise<boolean> {
         const [fetchedPoll] = await db.select().from(pollsTable)
             .where(eq(pollsTable.id, pollId));
@@ -227,6 +248,12 @@ class PollStore {
         await db.delete(pollsTable).where(eq(pollsTable.id, pollId));
         return true;
     };
+
+    public async checkIfUserVoted(userId: string, pollId: string): Promise<boolean> {
+        const [existingVote] = await db.select().from(votesTable)
+            .where(and(eq(votesTable.userId, userId), eq(votesTable.pollId, pollId)));
+        return !!existingVote;
+    }
 };
 
 export const pollStore = PollStore.getInstance();
