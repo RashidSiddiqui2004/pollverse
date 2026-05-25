@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import SignOutButton from "./SignOutButton";
 
 export default function Navbar() {
   const { data: session } = useSession();
@@ -12,31 +13,29 @@ export default function Navbar() {
         <Link href="/" className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:underline">
           Home
         </Link>
-        <Link href="/profile" className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:underline">
-          Profile
-        </Link>
-      </div>
-      <div>
-        {session?.user ? (
+        {session?.user && (
           <>
+            <Link href="/profile" className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:underline">
+              Profile
+            </Link>
             <Link href="/createPoll" className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:underline">
               Create Poll
-            </Link> 
-            <button
-              onClick={() => signOut()}
-              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              Sign Out
-            </button>
-          </>         
-        ) : (
-        <Link
-          href="/api/auth/signin"
-          className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
-        >
-          Sign In
-        </Link>
+            </Link>
+          </>
         )}
+
+      </div>
+      <div>
+        {session?.user ?
+          <SignOutButton />
+          : (
+            <Link
+              href="/api/auth/signin"
+              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Sign In
+            </Link>
+          )}
       </div>
     </nav>
   );

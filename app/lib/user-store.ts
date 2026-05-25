@@ -31,7 +31,7 @@ class UserStore {
     private mapToUser(t: typeof usersTable.$inferSelect): User {
         return {
             ...t,
-            id: String(t.id),
+            id: t.id,
             userName: t.userName ?? "",
             header: t.header ?? "",
             bio: t.bio ?? "",
@@ -62,7 +62,7 @@ class UserStore {
             bio: data.bio ?? "",
             isPublic: data.isPublic ?? true,
             avatarUrl: data.avatarUrl ?? "",
-            onboardingCompleted: false,
+            onboardingCompleted: true,
         }).returning();
 
         return this.mapToUser(inserted);

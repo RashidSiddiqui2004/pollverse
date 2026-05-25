@@ -9,7 +9,6 @@ export async function GET(request: Request) {
         const limit = parseInt(searchParams.get('limit') || '6', 10);
 
         const data = await pollStore.getPolls(page, limit);
-
         return NextResponse.json({ success: true, data });
     } catch (error: any) {
         console.error('Error fetching polls:', error);
@@ -23,7 +22,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { userId, question, mediaUrl, groupId } = body;
+        const { userId, question, mediaUrl, groupId, isMultiVotingAllowed, closingTime} = body;
 
         if (!userId || typeof userId !== 'string') {
             return NextResponse.json({ success: false, error: 'userId is required.' }, { status: 400 });
@@ -41,7 +40,9 @@ export async function POST(request: Request) {
             userId,
             question.trim(),
             mediaUrl || null,
-            groupId || null
+            isMultiVotingAllowed, 
+            closingTime || null,
+            groupId || null,
         );
 
         return NextResponse.json({ success: true, data: poll }, { status: 201 });

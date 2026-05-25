@@ -1,4 +1,4 @@
-import { integer, pgTable, timestamp, varchar, boolean, pgEnum, uuid, text } from "drizzle-orm/pg-core";
+import { integer, pgTable, timestamp, varchar, boolean, pgEnum, uuid, text, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 const timestamps = {
@@ -37,8 +37,19 @@ const pollsTable = pgTable("polls", {
     userId: uuid("user_id").notNull().references(() => usersTable.id),
     groupId: uuid("group_id").references(() => groupsTable.id),
     isMultiVotingAllowed: boolean().default(false),
-    ...timestamps
-});
+    closingTime: timestamp("closing_time", {
+        withTimezone: true,
+    }),
+    ...timestamps,
+},
+    (table) => ({
+        closingTimeIdx: index("polls_closing_time_idx")
+            .on(table.closingTime),
+        createdAtIdx: index("polls_created_at_idx")
+            .on(table.createdAt),
+        groupCreatedIdx: index("polls_group_created_idx")
+            .on(table.groupId, table.createdAt),
+    }));
 
 const pollsOptionsTable = pgTable("polls_options", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),

@@ -1,13 +1,15 @@
 import { db } from './db';
-import { pollsTable, pollsOptionsTable, votesTable, followedUsersTable, groupsTable, groupMembersTable, usersTable } from '../db/schema';
-import { desc, sql, eq, and } from 'drizzle-orm';
-
+import { pollsTable, pollsOptionsTable, votesTable, followedUsersTable, groupsTable, groupMembersTable, usersTable, reactionsTable } from '../db/schema';
+import { desc, sql, eq, gt, and, or, isNull } from 'drizzle-orm';
+import { ReactionType } from '../utils/reactions';
 export interface Poll {
     id: string,
     question: string,
     mediaUrl: string,
     userId: string,
     groupId: string | null,
+    isMultiVotingAllowed: boolean,
+    closingTime: string | null;
     createdAt: string,
     updatedAt: string | null,
     pollOptions: PollOption[],
@@ -23,6 +25,10 @@ export interface PollOption {
     updatedAt: string | null
 };
 
+export const activePollsFilter = or(
+    gt(pollsTable.closingTime, new Date()),
+    isNull(pollsTable.closingTime)
+);
 class PollStore {
     private PAGE_SIZE: number;
     private static instance: PollStore;
@@ -41,13 +47,15 @@ class PollStore {
     private mapToPoll(t: typeof pollsTable.$inferSelect, pollOptions: PollOption[] = []): Poll {
         return {
             ...t,
-            id: String(t.id),
+            id: t.id,
             mediaUrl: t.mediaUrl ?? "",
-            userId: String(t.userId),
-            groupId: t.groupId ? String(t.groupId) : null,
+            userId: t.userId,
+            groupId: t.groupId ?? null,
+            isMultiVotingAllowed: t.isMultiVotingAllowed ?? false,
+            closingTime: t.closingTime?.toISOString() ?? null,
             createdAt: t.createdAt.toISOString(),
             updatedAt: t.updatedAt?.toISOString() ?? null,
-            pollOptions: pollOptions
+            pollOptions
         };
     }
 
@@ -61,7 +69,7 @@ class PollStore {
     }
 
     public async createPoll(userId: string, question: string, mediaUrl: string | null,
-        groupId?: string): Promise<Poll> {
+        isMultiVotingAllowed: boolean = false, closingTime: string | null, groupId?: string): Promise<Poll> {
 
         // Validating the poll
         if (!question.trim() || !userId) {
@@ -72,7 +80,9 @@ class PollStore {
             question,
             mediaUrl,
             userId,
-            groupId: groupId ?? null
+            groupId: groupId ?? null,
+            isMultiVotingAllowed,
+            closingTime: closingTime ? new Date(closingTime) : null
         }).returning();
 
         return this.mapToPoll(inserted, []);
@@ -96,8 +106,10 @@ class PollStore {
     }> {
         const offset = (page - 1) * pageSize;
 
+        // Fetch the polls with no closing time or closing time is in future.
         const [data, countResult] = await Promise.all([
             db.select().from(pollsTable)
+                .where(activePollsFilter)
                 .orderBy(desc(pollsTable.createdAt))
                 .limit(pageSize)
                 .offset(offset),
@@ -157,7 +169,7 @@ class PollStore {
             throw new Error("Poll not found");
         }
 
-        // Check if user is authorized to view the poll
+        // Check if user is authorized to view the poll.
         // 1. The profile of the poll's owner is public 
         // 2. OR the user is following the poll's owner
         // 3. OR the poll's group is public (if the poll is in a group)
@@ -207,13 +219,31 @@ class PollStore {
     }
 
     public async votePollOption(userId: string, pollId: string, optionId: number): Promise<boolean> {
-        // Check if user has already voted for this poll.
-        const [existingVote] = await db.select().from(votesTable)
-            .where(and(eq(votesTable.userId, userId), eq(votesTable.pollId, pollId)));
-        
-        if (Boolean(existingVote)) {
-            throw new Error("You have already voted for this poll");
+        // Check if user has already voted for this poll option.
+        const [vote] = await db.select().from(votesTable)
+            .where(and(eq(votesTable.userId, userId), eq(votesTable.optionId, optionId)));
+
+        if (vote) {
+            throw new Error("You have already voted for this poll option.");
         }
+
+        const [poll] = await db.select().from(pollsTable)
+            .where(eq(pollsTable.id, pollId));
+
+        if(!poll){
+            throw new Error("Poll not found");
+        }
+
+        // If it's not a multi-voting poll.
+        if (!poll.isMultiVotingAllowed) {
+            // Check if user has already voted for this poll.
+            const hasUserAlreadyVoted = await this.checkIfUserVoted(userId, pollId)
+            if (hasUserAlreadyVoted) {
+                throw new Error("You have already voted for this singular poll");
+            }
+        }
+
+        // Otherwise, user can cast their vote.
 
         // Add vote to the option.
         await db.insert(votesTable).values({
@@ -235,12 +265,12 @@ class PollStore {
         const [fetchedPoll] = await db.select().from(pollsTable)
             .where(eq(pollsTable.id, pollId));
 
-        // check if poll exists
+        // Check if poll exists.
         if (!fetchedPoll) {
             throw new Error("Poll not found");
         }
 
-        // check if the user is the owner of the poll
+        // Check if the user is the owner of the poll.
         if (fetchedPoll.userId !== userId) {
             throw new Error("You are not authorized to delete this poll");
         }
@@ -252,8 +282,62 @@ class PollStore {
     public async checkIfUserVoted(userId: string, pollId: string): Promise<boolean> {
         const [existingVote] = await db.select().from(votesTable)
             .where(and(eq(votesTable.userId, userId), eq(votesTable.pollId, pollId)));
-        return !!existingVote;
+        return Boolean(existingVote);
     }
+
+    public async reactToPoll(userId: string, pollId: string, reaction: ReactionType): Promise<boolean> {
+        // Delete previous reaction on the poll.
+        const existingReaction = await this.getUserReactionOnPoll(userId, pollId);
+        if (existingReaction) {
+            await db.delete(reactionsTable)
+                .where(and(eq(reactionsTable.userId, userId), eq(reactionsTable.pollId, pollId)));
+        }
+        // Add reaction to the poll.
+        await db.insert(reactionsTable).values({
+            userId: userId,
+            pollId: pollId,
+            reactionType: reaction
+        });
+        return true;
+    };
+
+    public async getUserReactionOnPoll(userId: string, pollId: string): Promise<string | null> {
+        const [reaction] = await db.select().from(reactionsTable)
+            .where(and(eq(reactionsTable.userId, userId), eq(reactionsTable.pollId, pollId)));
+
+        if (!reaction) {
+            return null;
+        }
+
+        return reaction.reactionType;
+    };
+
+    public async reactToPollOption(userId: string, optionId: number, reaction: ReactionType): Promise<boolean> {
+        // Delete previous reaction on the poll option.
+        const existingReaction = await this.getUserReactionOnPollOption(userId, optionId);
+        if (existingReaction) {
+            await db.delete(reactionsTable)
+                .where(and(eq(reactionsTable.userId, userId), eq(reactionsTable.optionId, optionId)));
+        }
+        // Add reaction to the poll option.
+        await db.insert(reactionsTable).values({
+            userId: userId,
+            optionId: optionId,
+            reactionType: reaction
+        });
+        return true;
+    };
+
+    public async getUserReactionOnPollOption(userId: string, optionId: number): Promise<string | null> {
+        const [reaction] = await db.select().from(reactionsTable)
+            .where(and(eq(reactionsTable.userId, userId), eq(reactionsTable.optionId, optionId)));
+
+        if (!reaction) {
+            return null;
+        }
+
+        return reaction.reactionType;
+    };
 };
 
 export const pollStore = PollStore.getInstance();
