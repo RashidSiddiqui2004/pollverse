@@ -14,7 +14,6 @@ export default function ProfilePage() {
     const [isPublic, setIsPublic] = useState(true);
 
     const fetchUserProfile = async () => {
-        console.log("Fetching user session:", session);
         try {
             const response = await fetch(
                 `${API_BASE_URL}/user-profile/${encodeURIComponent(session?.user?.email || "")}`

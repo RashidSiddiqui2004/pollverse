@@ -1,7 +1,8 @@
 import { db } from './db';
-import { pollsTable, pollsOptionsTable, votesTable, followedUsersTable, groupsTable, groupMembersTable, usersTable, reactionsTable } from '../db/schema';
+import { pollsTable, pollsOptionsTable, votesTable, followedUsersTable, userGroupsTable, groupMembersTable, usersTable, reactionsTable } from '../db/schema';
 import { desc, sql, eq, gt, and, or, isNull } from 'drizzle-orm';
 import { ReactionType } from '../utils/reactions';
+
 export interface Poll {
     id: string,
     question: string,
@@ -29,6 +30,7 @@ export const activePollsFilter = or(
     gt(pollsTable.closingTime, new Date()),
     isNull(pollsTable.closingTime)
 );
+
 class PollStore {
     private PAGE_SIZE: number;
     private static instance: PollStore;
@@ -131,6 +133,13 @@ class PollStore {
         };
     }
 
+    // TODO: Write an algorithm to fetch the popular polls 
+    // on the basis of votes, reactions, age factor geographical
+    // or linguistic basis etc. 
+    public async getTrendingPolls(){
+        
+    }
+
     public async getUserPolls(userId: string, page: number = 1, pageSize: number = this.PAGE_SIZE): Promise<{
         polls: Poll[],
         totalPolls: number
@@ -193,8 +202,8 @@ class PollStore {
             }
             // 3. Check if the poll's group is public  
             else if (poll.groupId) {
-                const [group] = await db.select().from(groupsTable)
-                    .where(eq(groupsTable.id, poll.groupId));
+                const [group] = await db.select().from(userGroupsTable)
+                    .where(eq(userGroupsTable.id, poll.groupId));
                 if (group.isPublic) {
                     isAuthorized = true;
                 }

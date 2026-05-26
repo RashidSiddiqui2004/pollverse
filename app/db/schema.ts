@@ -12,7 +12,7 @@ const usersTable = pgTable("users", {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
     email: text("email").notNull().unique(),
-    userName: varchar({ length: 100 }).unique(),
+    userName: varchar({ length: 100 }).notNull().unique(),
     // age: integer().notNull(),
     header: varchar({ length: 255 }).default(""),
     bio: varchar({ length: 455 }).default(""),
@@ -35,7 +35,7 @@ const pollsTable = pgTable("polls", {
     question: varchar({ length: 500 }).notNull(),
     mediaUrl: varchar({ length: 1000 }),
     userId: uuid("user_id").notNull().references(() => usersTable.id),
-    groupId: uuid("group_id").references(() => groupsTable.id),
+    groupId: uuid("group_id").references(() => userGroupsTable.id),
     isMultiVotingAllowed: boolean().default(false),
     closingTime: timestamp("closing_time", {
         withTimezone: true,
@@ -81,7 +81,7 @@ const reactionsTable = pgTable("reactions", {
 
 // Groups - Users can create groups and other users can join them. 
 // Each group has one admin and many members. 
-const groupsTable = pgTable("groups", {
+const userGroupsTable = pgTable("user_groups", {
     id: uuid("id").primaryKey().defaultRandom(),
     groupName: varchar({ length: 255 }).notNull(),
     description: varchar({ length: 400 }).notNull(),
@@ -92,7 +92,7 @@ const groupsTable = pgTable("groups", {
 
 const groupMembersTable = pgTable("group_members", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    groupId: uuid("group_id").notNull().references(() => groupsTable.id),
+    groupId: uuid("group_id").notNull().references(() => userGroupsTable.id),
     userId: uuid("user_id").notNull().references(() => usersTable.id),
     ...timestamps
 });
@@ -100,7 +100,7 @@ const groupMembersTable = pgTable("group_members", {
 // TODO: Add a feature to allow users to request to join groups
 const groupJoinRequestsTable = pgTable("group_join_requests", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    groupId: uuid("group_id").notNull().references(() => groupsTable.id),
+    groupId: uuid("group_id").notNull().references(() => userGroupsTable.id),
     userId: uuid("user_id").notNull().references(() => usersTable.id),
     note: varchar({ length: 255 }), // optional note by the user who wants to join
     ...timestamps
@@ -112,7 +112,7 @@ const usersRelations = relations(usersTable, ({ many }) => ({
     reactions: many(reactionsTable),
     followers: many(followedUsersTable, { relationName: "follower" }),
     following: many(followedUsersTable, { relationName: "following" }),
-    administeredGroups: many(groupsTable, { relationName: "groupAdmin" }),
+    administeredGroups: many(userGroupsTable, { relationName: "groupAdmin" }),
     groupMemberships: many(groupMembersTable),
 }));
 
@@ -129,9 +129,9 @@ const followedUsersRelations = relations(followedUsersTable, ({ one }) => ({
     })
 }));
 
-const groupsRelations = relations(groupsTable, ({ many, one }) => ({
+const groupsRelations = relations(userGroupsTable, ({ many, one }) => ({
     admin: one(usersTable, {
-        fields: [groupsTable.adminId],
+        fields: [userGroupsTable.adminId],
         references: [usersTable.id],
         relationName: "groupAdmin"
     }),
@@ -139,9 +139,9 @@ const groupsRelations = relations(groupsTable, ({ many, one }) => ({
 }));
 
 const groupMembersRelations = relations(groupMembersTable, ({ one }) => ({
-    group: one(groupsTable, {
+    group: one(userGroupsTable, {
         fields: [groupMembersTable.groupId],
-        references: [groupsTable.id]
+        references: [userGroupsTable.id]
     }),
     user: one(usersTable, {
         fields: [groupMembersTable.userId],
@@ -150,9 +150,9 @@ const groupMembersRelations = relations(groupMembersTable, ({ one }) => ({
 }));
 
 const groupJoinRequestsRelations = relations(groupJoinRequestsTable, ({ one }) => ({
-    group: one(groupsTable, {
+    group: one(userGroupsTable, {
         fields: [groupJoinRequestsTable.groupId],
-        references: [groupsTable.id]
+        references: [userGroupsTable.id]
     }),
     user: one(usersTable, {
         fields: [groupJoinRequestsTable.userId],
@@ -169,9 +169,9 @@ const pollsRelations = relations(
         options: many(pollsOptionsTable),
         votes: many(votesTable),
         reactions: many(reactionsTable),
-        group: one(groupsTable, {
+        group: one(userGroupsTable, {
             fields: [pollsTable.groupId],
-            references: [groupsTable.id]
+            references: [userGroupsTable.id]
         })
     })
 );
@@ -224,16 +224,7 @@ export {
     votesTable,
     reactionsTable,
     followedUsersTable,
-    groupsTable,
+    userGroupsTable,
     groupMembersTable,
-    groupJoinRequestsTable,
-    usersRelations,
-    pollsRelations,
-    pollOptionsRelations,
-    reactionsRelations,
-    votesRelations,
-    followedUsersRelations,
-    groupsRelations,
-    groupMembersRelations,
-    groupJoinRequestsRelations
+    groupJoinRequestsTable
 };

@@ -32,7 +32,7 @@ class UserStore {
         return {
             ...t,
             id: t.id,
-            userName: t.userName ?? "",
+            userName: t.userName,
             header: t.header ?? "",
             bio: t.bio ?? "",
             avatarUrl: t.avatarUrl ?? "",

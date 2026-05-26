@@ -1,10 +1,11 @@
 "use client";
 
 import { API_BASE_URL } from "@/app/utils/constants";
-import { redirect } from "next/navigation";
 import { useState } from "react";
+import { redirect } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { PollClosingTimePicker } from "@/components/PollClosingtimePicker";
+import { postJSON } from "@/app/utils/postJson";
 
 export interface PollOptionDto {
     text: string;
@@ -12,11 +13,7 @@ export interface PollOptionDto {
 }
 
 export default function CreatePollPage() {
-    const { data: session } = useSession();
-
-    if (!session?.user) {
-        redirect("/signin");
-    }
+    const { data: session, status } = useSession();
 
     const [question, setQuestion] = useState("");
     const [mediaUrl, setMediaUrl] = useState("");
@@ -27,30 +24,23 @@ export default function CreatePollPage() {
         { text: "", mediaUrl: "" },
     ]);
 
+    if (status === "loading") {
+        return (
+            <div className="mx-auto flex min-h-screen max-w-3xl items-center justify-center px-4">
+                <div className="rounded-2xl border border-neutral-200 bg-white px-6 py-4 text-sm text-neutral-600 shadow-sm">
+                    Loading...
+                </div>
+            </div>
+        );
+    }
+
+    if (!session?.user) {
+        redirect("/signin");
+    }
+
     const handleAddOption = () => {
         setPollOptions([...pollOptions, { text: "", mediaUrl: "" }]);
     }
-
-    const postJSON = async <T,>(
-        url: string,
-        body: unknown
-    ): Promise<T> => {
-        const res = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(body),
-        });
-
-        const data = await res.json().catch(() => null);
-
-        if (!res.ok) {
-            throw new Error(data?.error || `Request failed: ${res.status}`);
-        }
-
-        return data as T;
-    };
 
     const handleMediaUpload = async (file: File | Blob): Promise<string | null> => {
         if (!file) return null;

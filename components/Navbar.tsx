@@ -15,11 +15,14 @@ export default function Navbar() {
         </Link>
         {session?.user && (
           <>
-            <Link href="/profile" className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:underline">
+            <Link href="/profile" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Profile
             </Link>
-            <Link href="/createPoll" className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:underline">
+            <Link href="/createPoll" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Create Poll
+            </Link>
+            <Link href="/createGroup" className="text-lg font-semibold text-gray-500 dark:text-gray-100">
+              Create Group
             </Link>
           </>
         )}
