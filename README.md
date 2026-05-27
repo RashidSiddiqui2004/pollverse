@@ -1,6 +1,6 @@
-# Project Pulse - Interactive Media & Polling Platform
+# Pollverse - Interactive Media & Polling Platform
 
-Project **Socials** is a dynamic, social media and interactive web application designed to merge high-fidelity rich media sharing with deep, real-time community engagement. Users can seamlessly share media and interact with highly configurable polls, offering features beyond traditional static platforms such as option-specific reactions, live analytics, and fluid vote modification.
+Project **Pollverse** is a dynamic, social media and interactive web application designed to merge high-fidelity rich media sharing with deep, real-time community engagement. Users can seamlessly share media and interact with highly configurable polls, offering features beyond traditional static platforms such as option-specific reactions, live analytics, and fluid vote modification.
 
 ## 🚀 Core Features
 

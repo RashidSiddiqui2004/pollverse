@@ -133,11 +133,66 @@ class PollStore {
         };
     }
 
-    // TODO: Write an algorithm to fetch the popular polls 
-    // on the basis of votes, reactions, age factor geographical
-    // or linguistic basis etc. 
-    public async getTrendingPolls(){
-        
+    // TODO: Update the algorithm to take geographical and demographic 
+    // data in consideration.
+    public async getTrendingPolls(page: number = 1, pageSize: number = this.PAGE_SIZE) {
+        const offset = (page - 1) * pageSize;
+
+        const voteCounts = db
+            .select({
+                pollId: votesTable.pollId,
+                voteCount: sql<number>`count(*)`.as("vote_count"),
+            })
+            .from(votesTable)
+            .groupBy(votesTable.pollId)
+            .as("vote_counts");
+
+        const reactionCounts = db
+            .select({
+                pollId: reactionsTable.pollId,
+                reactionCount: sql<number>`count(*)`.as("reaction_count"),
+            })
+            .from(reactionsTable)
+            .groupBy(reactionsTable.pollId)
+            .as("reaction_counts");
+
+        const trendingPollsData = await db
+            .select({
+                poll: pollsTable,
+                voteCount: sql<number>`coalesce(${voteCounts.voteCount}, 0)`.as("vote_count"),
+                reactionCount: sql<number>`coalesce(${reactionCounts.reactionCount}, 0)`.as("reaction_count"),
+                trendingScore: sql<number>`
+      coalesce(${voteCounts.voteCount}, 0) * 2 +
+      coalesce(${reactionCounts.reactionCount}, 0)
+    `.as("trending_score"),
+            })
+            .from(pollsTable)
+            .leftJoin(voteCounts, sql`${voteCounts.pollId} = ${pollsTable.id}`)
+            .leftJoin(reactionCounts, sql`${reactionCounts.pollId} = ${pollsTable.id}`)
+            .where(activePollsFilter)
+            .orderBy(
+                desc(sql`
+      coalesce(${voteCounts.voteCount}, 0) * 2 +
+      coalesce(${reactionCounts.reactionCount}, 0)
+    `),
+                desc(pollsTable.createdAt)
+            )
+            .limit(pageSize)
+            .offset(offset);
+
+        const trendingPolls: Poll[] = [];
+
+        // Populate corresponding options data in each poll 
+        for (const poll of trendingPollsData) {
+            const pollOptions = await db.select().from(pollsOptionsTable)
+                .where(eq(pollsOptionsTable.pollId, poll.poll.id));
+            trendingPolls.push(this.mapToPoll(poll.poll, pollOptions.map(this.mapToPollOption)));
+        }
+
+        return {
+            polls: trendingPolls,
+            totalPolls: trendingPolls.length
+        };
     }
 
     public async getUserPolls(userId: string, page: number = 1, pageSize: number = this.PAGE_SIZE): Promise<{
@@ -239,7 +294,7 @@ class PollStore {
         const [poll] = await db.select().from(pollsTable)
             .where(eq(pollsTable.id, pollId));
 
-        if(!poll){
+        if (!poll) {
             throw new Error("Poll not found");
         }
 
@@ -308,7 +363,7 @@ class PollStore {
             reactionType: reaction
         });
         return true;
-    };
+    }
 
     public async getUserReactionOnPoll(userId: string, pollId: string): Promise<string | null> {
         const [reaction] = await db.select().from(reactionsTable)
@@ -319,7 +374,7 @@ class PollStore {
         }
 
         return reaction.reactionType;
-    };
+    }
 
     public async reactToPollOption(userId: string, optionId: number, reaction: ReactionType): Promise<boolean> {
         // Delete previous reaction on the poll option.
@@ -335,7 +390,7 @@ class PollStore {
             reactionType: reaction
         });
         return true;
-    };
+    }
 
     public async getUserReactionOnPollOption(userId: string, optionId: number): Promise<string | null> {
         const [reaction] = await db.select().from(reactionsTable)
@@ -346,7 +401,7 @@ class PollStore {
         }
 
         return reaction.reactionType;
-    };
+    }
 };
 
 export const pollStore = PollStore.getInstance();

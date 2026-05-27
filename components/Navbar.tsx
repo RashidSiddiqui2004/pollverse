@@ -10,8 +10,11 @@ export default function Navbar() {
   return (
     <nav className="flex items-center justify-between bg-white dark:bg-gray-800 p-4 shadow-md rounded-md mb-4">
       <div className="flex space-x-4">
-        <Link href="/" className="text-lg font-semibold text-gray-900 dark:text-gray-100 hover:underline">
+        <Link href="/" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Home
+        </Link> 
+        <Link href="/trendingPolls" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+          Trending
         </Link>
         {session?.user && (
           <>

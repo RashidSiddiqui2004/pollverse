@@ -14,7 +14,7 @@ declare module "next-auth" {
     user: {
       id: string;
       userName: string | null;
-        header: string | null;
+      header: string | null;
       bio: string | null;
       isPublic: boolean;
       onboardingCompleted: boolean;
@@ -23,13 +23,12 @@ declare module "next-auth" {
 }
 
 declare module "next-auth/jwt" {
-    interface JWT {
-        /** The user's UUID from the usersTable */
-        id: string;
-        userName: string | null;
-        header: string | null;
-        bio: string | null;
-        isPublic: boolean;
-        onboardingCompleted: boolean;
-    }
+  interface JWT {
+    id: string;
+    userName: string | null;
+    header: string | null;
+    bio: string | null;
+    isPublic: boolean;
+    onboardingCompleted: boolean;
+  }
 }

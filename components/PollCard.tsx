@@ -1,15 +1,14 @@
 "use client";
 
-import { Poll, PollOption } from "@/app/lib/poll-store";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { API_BASE_URL } from "@/app/utils/constants";
-import { FloatingReactionDock } from "@/components/FloatingReactionDock";
-import { ReactionType } from "@/app/utils/reactions";
 import { BiSelectMultiple } from "react-icons/bi";
 import { GrCheckboxSelected } from "react-icons/gr";
-
+import { FloatingReactionDock } from "@/components/FloatingReactionDock";
+import { Poll, PollOption } from "@/app/lib/poll-store";
+import { ReactionType } from "@/app/utils/reactions";
+import { API_BASE_URL } from "@/app/utils/constants";
 interface PollCardProps {
   poll: Poll;
 }
@@ -160,21 +159,6 @@ export default function PollCard({ poll }: PollCardProps) {
           </div>
         )}
 
-        <div className="flex gap-1 items-center m-2 italic text-sm">
-          {poll.isMultiVotingAllowed ?
-            <>
-              <BiSelectMultiple />
-              <p>Select one or more options</p>
-            </>
-
-            :
-            <>
-              <GrCheckboxSelected />
-              <p>Select a single option</p>
-            </>
-          }
-        </div>
-
         <div className="p-5 sm:p-6">
           {/* Header */}
           <div className="mb-6 flex items-start justify-between gap-4">
@@ -183,10 +167,24 @@ export default function PollCard({ poll }: PollCardProps) {
                 {poll.question}
               </h3>
 
-              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-                {votes.reduce((acc, curr) => acc + curr.voteCount, 0)} total votes
+              <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
+                {votes.reduce((acc, curr) => acc + curr.voteCount, 0)} votes
               </p>
             </div>
+          </div>
+
+          <div className="flex gap-1 items-center m-1 text-sm text-neutral-600 font-medium">
+            {poll.isMultiVotingAllowed ?
+              <>
+                <BiSelectMultiple />
+                <p>Select one or more options</p>
+              </>
+              :
+              <>
+                <GrCheckboxSelected />
+                <p>Select a single option</p>
+              </>
+            }
           </div>
 
           {/* Poll Options */}
@@ -231,6 +229,7 @@ export default function PollCard({ poll }: PollCardProps) {
           </div>
         </div>
       </div>
+      
     </div>
   );
 }

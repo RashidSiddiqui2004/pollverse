@@ -97,12 +97,11 @@ const groupMembersTable = pgTable("group_members", {
     ...timestamps
 });
 
-// TODO: Add a feature to allow users to request to join groups
 const groupJoinRequestsTable = pgTable("group_join_requests", {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     groupId: uuid("group_id").notNull().references(() => userGroupsTable.id),
     userId: uuid("user_id").notNull().references(() => usersTable.id),
-    note: varchar({ length: 255 }), // optional note by the user who wants to join
+    note: varchar({ length: 255 }), // Optional note by the user who wants to join the group
     ...timestamps
 });
 

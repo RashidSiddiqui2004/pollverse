@@ -4,6 +4,7 @@ import { Providers } from "./providers";
 
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { APP_NAME, APP_DESCRIPTION } from "./utils/constants";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Socials",
-  description: "Interactive Media & Polling Platform",
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
 };
 
 export default function RootLayout({
@@ -36,7 +37,9 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <Providers>
           <Navbar />
-          {children}
+          <div className="mx-4">
+            {children}
+          </div>
         </Providers>
       </body>
     </html>
