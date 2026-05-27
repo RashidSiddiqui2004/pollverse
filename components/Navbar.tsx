@@ -9,29 +9,33 @@ export default function Navbar() {
 
   return (
     <nav className="flex items-center justify-between bg-white dark:bg-gray-800 p-4 shadow-md rounded-md mb-4">
-      <div className="flex space-x-4">
-        <Link href="/" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Home
-        </Link> 
-        <Link href="/trendingPolls" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Trending
-        </Link>
-        {session?.user && (
-          <>
-            <Link href="/profile" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Profile
-            </Link>
-            <Link href="/createPoll" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              Create Poll
-            </Link>
-            <Link href="/createGroup" className="text-lg font-semibold text-gray-500 dark:text-gray-100">
-              Create Group
-            </Link>
-          </>
-        )}
-
+     
+      <div className="flex justify-around gap-2">
+          <Link href="/" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Home
+          </Link>
+          <Link href="/trendingPolls" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Trending
+          </Link>
+          <Link href="/groups" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Groups
+          </Link>
       </div>
-      <div>
+      
+      <div className="flex justify-around gap-2">
+         {session?.user && (
+            <>
+              <Link href="/profile" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Profile
+              </Link>
+              <Link href="/createPoll" className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                Create Poll
+              </Link>
+              <Link href="/createGroup" className="text-lg font-semibold text-gray-500 dark:text-gray-100">
+                Create Group
+              </Link>
+            </>
+          )}
         {session?.user ?
           <SignOutButton />
           : (

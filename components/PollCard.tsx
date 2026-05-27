@@ -9,6 +9,7 @@ import { FloatingReactionDock } from "@/components/FloatingReactionDock";
 import { Poll, PollOption } from "@/app/lib/poll-store";
 import { ReactionType } from "@/app/utils/reactions";
 import { API_BASE_URL } from "@/app/utils/constants";
+
 interface PollCardProps {
   poll: Poll;
 }

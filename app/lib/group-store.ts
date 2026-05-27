@@ -1,6 +1,6 @@
 import { db } from './db';
 import { groupJoinRequestsTable, groupMembersTable, userGroupsTable } from '../db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 
 export interface UserGroup {
     id: string;
@@ -13,9 +13,12 @@ export interface UserGroup {
 };
 
 class UserGroupStore {
+    private PAGE_SIZE: number;
     private static instance: UserGroupStore;
 
-    private constructor() { }
+    private constructor() {
+        this.PAGE_SIZE = 6;
+    }
 
     public static getInstance(): UserGroupStore {
         if (!UserGroupStore.instance) {
@@ -55,18 +58,33 @@ class UserGroupStore {
         return this.mapToUserGroup(inserted);
     }
 
-    public async getPublicUserGroups(): Promise<UserGroup[]> {
-        const publicUserGroups = await db.select().from(userGroupsTable)
-            .where(eq(userGroupsTable.isPublic, true));
+    public async getPublicUserGroups(page: number = 1, pageSize: number = this.PAGE_SIZE): Promise<{
+        userGroups: UserGroup[],
+        totalUserGroups: number
+    }> {
+        const offset = (page - 1) * pageSize;
 
-        return publicUserGroups.map(this.mapToUserGroup);
+        const [publicUserGroups, countResult] = await Promise.all([
+            db.select().from(userGroupsTable)
+                .where(eq(userGroupsTable.isPublic, true))
+                .orderBy(desc(userGroupsTable.createdAt))
+                .limit(pageSize)
+                .offset(offset),
+            db.select({ count: sql<number>`cast(count(*) as integer)` }).from(userGroupsTable)
+                .where(eq(userGroupsTable.isPublic, true))
+        ]);
+
+        return {
+            userGroups: publicUserGroups.map(this.mapToUserGroup),
+            totalUserGroups: countResult[0].count
+        };
     }
 
     // TODO: Write an algorithm to fetch the most popular user groups
     // on the basis of daily posts, trend in members joining the group,
     // average user retention period, geographical or linguistic basis etc. 
-    public async getTrendingUserGroups(){
-        
+    public async getTrendingUserGroups() {
+
     }
 
     public async getUserGroupById(groupId: string): Promise<UserGroup> {
@@ -80,11 +98,15 @@ class UserGroupStore {
         return this.mapToUserGroup(userGroup);
     }
 
-    public async getUserGroupsForUser(userId: string): Promise<UserGroup[]> {
+    public async getUserGroupsForUser(userId: string, page: number = 1, pageSize: number = this.PAGE_SIZE): Promise<UserGroup[]> {
+        const offset = (page - 1) * pageSize;
+
         const userGroupIds = await db.select({
             groupId: groupMembersTable.groupId
         }).from(groupMembersTable)
-            .where(eq(groupMembersTable.userId, userId));
+            .where(eq(groupMembersTable.userId, userId))
+            .limit(pageSize)
+            .offset(offset);
 
         const userGroups: UserGroup[] = [];
 

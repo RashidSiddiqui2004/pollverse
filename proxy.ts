@@ -3,7 +3,7 @@ import { NextAuthRequest } from "next-auth";
 import { NextResponse } from "next/server";
 
 const getProtectedRoutes = (req: NextAuthRequest) => {
-  const protectedRoutes = ["/profile", "/createPoll"];
+  const protectedRoutes = ["/profile", "/createPoll", "/groups/following"];
   return protectedRoutes.some((route) => req.nextUrl.pathname.startsWith(route));
 }
 
@@ -14,5 +14,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/profile/:path*", "/createPoll/:path*"],
+  matcher: ["/profile/:path*", "/createPoll/:path*", "/createGroup/:path*", "/groups/following/:path*"],
 };
