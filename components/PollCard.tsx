@@ -20,7 +20,6 @@ export default function PollCard({ poll }: PollCardProps) {
 
   const [hasVoted, setHasVoted] = useState<boolean>(false);
   const [votes, setVotes] = useState<PollOption[]>(poll.pollOptions);
-
   const [userReaction, setUserReaction] = useState(ReactionType.LIKE);
 
   const checkIfUserAlreadyVoted = async () => {
@@ -47,14 +46,11 @@ export default function PollCard({ poll }: PollCardProps) {
     }
 
     if (status !== "authenticated") {
-      // Redirect unauthenticated users to signin page.
       router.push("/signin");
       return;
     }
 
     const newVotes = [...votes];
-
-    // Update the vote count for the selected option.
     const optionIndex = newVotes.findIndex((opt) => opt.id === optionId);
     if (optionIndex !== -1) {
       newVotes[optionIndex] = {
@@ -75,9 +71,9 @@ export default function PollCard({ poll }: PollCardProps) {
       const data = await res.json();
       if (data.success) {
         setVotes(newVotes);
+        setHasVoted(true);
       }
     } catch (e) {
-      // Revert optimistic update on error
       setVotes(poll.pollOptions);
       console.error("Error while reacting to poll: ", e);
       throw new Error("Failed to react to poll");
@@ -86,13 +82,11 @@ export default function PollCard({ poll }: PollCardProps) {
 
   const handleReact = async (reaction: ReactionType, optionId: number | null = null): Promise<void> => {
     if (status !== "authenticated") {
-      // Redirect unauthenticated users to signin page
       router.push("/signin");
       return;
     }
 
     try {
-      // React to poll
       if (optionId === null) {
         const res = await fetch(`${API_BASE_URL}/polls/${poll.id}/react?userId=${session.user?.id}`, {
           method: "POST",
@@ -106,9 +100,7 @@ export default function PollCard({ poll }: PollCardProps) {
         if (data.success) {
           setUserReaction(reaction);
         }
-        // React to Poll option
-      }
-      else {
+      } else {
         const res = await fetch(`${API_BASE_URL}/polls/options/${optionId}react?userId=${session.user?.id}`, {
           method: "POST",
           headers: {
@@ -122,7 +114,6 @@ export default function PollCard({ poll }: PollCardProps) {
           setUserReaction(reaction);
         }
       }
-
     } catch (e) {
       console.error("Error while reacting to poll: ", e);
       throw new Error("Failed to react to poll");
@@ -131,8 +122,8 @@ export default function PollCard({ poll }: PollCardProps) {
 
   useEffect(() => {
     const fetchVoteStatus = async () => {
-      const hasVoted = await checkIfUserAlreadyVoted();
-      setHasVoted(hasVoted);
+      const voted = await checkIfUserAlreadyVoted();
+      setHasVoted(voted);
     };
 
     if (status === "authenticated") {
@@ -140,68 +131,81 @@ export default function PollCard({ poll }: PollCardProps) {
     }
   }, [status]);
 
+  const totalVotes = votes.reduce((acc, curr) => acc + curr.voteCount, 0);
+
   return (
-    <div className="relative overflow-hidden m-3 rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+    <div className="relative my-4 flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 text-foreground transition-colors">
+      {/* Floating Reaction Dock */}
       <FloatingReactionDock
         value={userReaction}
         onChange={(reaction) => handleReact(reaction)}
         align="right"
       />
 
-      <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-300 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900">
-        {/* Poll Media */}
-        {poll.mediaUrl && (
-          <div className="relative aspect-video w-full overflow-hidden border-b border-neutral-200 dark:border-neutral-800">
-            <img
-              src={poll.mediaUrl}
-              alt="Poll media"
-              className="h-full w-full object-cover"
-            />
-          </div>
-        )}
+      {/* Poll Media */}
+      {poll.mediaUrl && (
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-secondary/10">
+          <img
+            src={poll.mediaUrl}
+            alt="Poll media"
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
 
-        <div className="p-5 sm:p-6">
-          {/* Header */}
-          <div className="mb-6 flex items-start justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-semibold leading-tight text-neutral-900 dark:text-neutral-100 sm:text-xl">
-                {poll.question}
-              </h3>
+      {/* Poll Heading & Meta */}
+      <div className="flex flex-col gap-1.5 pr-12">
+        <h3 className="text-lg font-bold leading-snug tracking-tight text-foreground sm:text-xl">
+          {poll.question}
+        </h3>
 
-              <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">
-                {votes.reduce((acc, curr) => acc + curr.voteCount, 0)} votes
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-1 items-center m-1 text-sm text-neutral-600 font-medium">
-            {poll.isMultiVotingAllowed ?
+        <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium">
+          <span className="font-bold text-foreground">
+            {totalVotes} vote{totalVotes !== 1 ? 's' : ''}
+          </span>
+          <span>•</span>
+          <span className="flex items-center gap-1">
+            {poll.isMultiVotingAllowed ? (
               <>
-                <BiSelectMultiple />
-                <p>Select one or more options</p>
+                <BiSelectMultiple className="h-3.5 w-3.5" />
+                <span>Multiple selection</span>
               </>
-              :
+            ) : (
               <>
-                <GrCheckboxSelected />
-                <p>Select a single option</p>
+                <GrCheckboxSelected className="h-3.5 w-3.5" />
+                <span>Single selection</span>
               </>
-            }
-          </div>
+            )}
+          </span>
+        </div>
+      </div>
 
-          {/* Poll Options */}
-          <div className="space-y-3">
-            {poll.pollOptions.map((option, idx) => {
-              const voteCount = votes[idx]?.voteCount ?? 0;
+      {/* Poll Options */}
+      <div className="flex flex-col gap-2">
+        {poll.pollOptions.map((option, idx) => {
+          const voteCount = votes[idx]?.voteCount ?? 0;
+          const percent = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
 
-              return (
-                <button
-                  key={option.id}
-                  onClick={() => handleVote(option.id)}
-                  className="group cursor-pointer flex w-full items-center gap-4 rounded-xl border border-neutral-200 bg-neutral-50 p-3 text-left transition-all duration-200 hover:border-neutral-300 hover:bg-neutral-100 active:scale-[0.99] dark:border-neutral-800 dark:bg-neutral-950 dark:hover:border-neutral-700 dark:hover:bg-neutral-900"
-                >
-                  {/* Option Media */}
+          return (
+            <button
+              key={option.id}
+              onClick={() => handleVote(option.id)}
+              disabled={!poll.isMultiVotingAllowed && hasVoted}
+              className="group relative overflow-hidden flex w-full items-center gap-4 rounded-xl border border-border bg-card p-3.5 text-left transition-all hover:bg-muted/50 disabled:cursor-default"
+            >
+              {/* Progress bar visual overlay */}
+              {hasVoted && (
+                <div
+                  className="absolute inset-y-0 left-0 bg-blue-500/10 dark:bg-blue-500/20 transition-all duration-500 ease-out"
+                  style={{ width: `${percent}%` }}
+                />
+              )}
+
+              {/* Option content */}
+              <div className="relative z-10 flex min-w-0 flex-1 items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
                   {option.mediaUrl && (
-                    <div className="h-16 w-16 overflow-hidden rounded-lg border border-neutral-200 dark:border-neutral-700">
+                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-secondary/10">
                       <img
                         src={option.mediaUrl}
                         alt={option.text}
@@ -209,28 +213,27 @@ export default function PollCard({ poll }: PollCardProps) {
                       />
                     </div>
                   )}
+                  <span className="truncate text-sm font-semibold text-foreground sm:text-base">
+                    {option.text}
+                  </span>
+                </div>
 
-                  {/* Option Content */}
-                  <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100 sm:text-base">
-                        {option.text}
-                      </p>
-                    </div>
-
-                    {/* Vote Count */}
-                    <div className="flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-medium text-neutral-700 shadow-sm dark:bg-neutral-800 dark:text-neutral-300">
+                {/* Option badge or percentage */}
+                <div className="flex items-center gap-2">
+                  {hasVoted ? (
+                    <span className="text-sm font-bold text-foreground">{percent}%</span>
+                  ) : (
+                    <div className="flex items-center gap-1.5 rounded-full bg-secondary/50 px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors group-hover:bg-secondary">
                       <span>{voteCount}</span>
-                      <span className="text-neutral-400">{`vote${voteCount > 1 ? 's' : ''}`}</span>
+                      <span>{`vote${voteCount !== 1 ? 's' : ''}`}</span>
                     </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+                  )}
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
-      
     </div>
   );
 }

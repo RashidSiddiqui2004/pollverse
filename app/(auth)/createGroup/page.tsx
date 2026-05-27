@@ -63,14 +63,14 @@ export default function CreateGroupPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm">
+    <div className="mx-auto w-full max-w-2xl">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card">
         {/* Header */}
-        <div className="border-b border-neutral-100 px-6 py-5 sm:px-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
+        <div className="border-b border-border px-6 py-5 sm:px-8">
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
             Create Group
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             Build a space for people with shared interests.
           </p>
         </div>
@@ -78,8 +78,8 @@ export default function CreateGroupPage() {
         {/* Form */}
         <div className="space-y-8 px-6 py-6 sm:px-8">
           {/* Group Name */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-neutral-700">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-foreground">
               Group Name
             </label>
             <input
@@ -87,13 +87,13 @@ export default function CreateGroupPage() {
               placeholder="Enter group name"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
-              className="h-12 w-full rounded-2xl border border-neutral-200 bg-white px-4 text-sm text-neutral-900 outline-none transition-all placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
+              className="h-11 w-full rounded-xl border border-border bg-background px-4 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-foreground/20 focus:ring-1 focus:ring-foreground/20"
             />
           </div>
 
           {/* Description */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-neutral-700">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-foreground">
               Description
             </label>
             <textarea
@@ -101,18 +101,18 @@ export default function CreateGroupPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={5}
-              className="w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none transition-all placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-foreground/20 focus:ring-1 focus:ring-foreground/20"
             />
           </div>
 
           {/* Visibility */}
-          <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-5">
+          <div className="rounded-xl border border-border bg-secondary/10 p-5">
             <label className="flex cursor-pointer items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-neutral-800">
+                <p className="text-sm font-semibold text-foreground">
                   Public Group
                 </p>
-                <p className="mt-1 text-xs text-neutral-500">
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   Anyone can discover and join this group.
                 </p>
               </div>
@@ -121,13 +121,13 @@ export default function CreateGroupPage() {
                 type="button"
                 onClick={() => setIsPublic(!isPublic)}
                 className={[
-                  "relative inline-flex h-7 w-12 items-center rounded-full transition-colors",
-                  isPublic ? "bg-neutral-900" : "bg-neutral-300",
+                  "relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer",
+                  isPublic ? "bg-foreground" : "bg-muted",
                 ].join(" ")}
               >
                 <span
                   className={[
-                    "inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform",
+                    "inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform",
                     isPublic ? "translate-x-6" : "translate-x-1",
                   ].join(" ")}
                 />
@@ -136,16 +136,16 @@ export default function CreateGroupPage() {
           </div>
 
           {/* Preview */}
-          <div className="rounded-2xl border border-neutral-200 bg-white p-5">
-            <p className="text-sm font-semibold text-neutral-800">Preview</p>
-            <div className="mt-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
-              <h3 className="text-base font-semibold text-neutral-900">
+          <div className="rounded-xl border border-border bg-card p-5">
+            <p className="text-sm font-bold text-foreground">Preview</p>
+            <div className="mt-4 rounded-xl border border-border bg-secondary/10 p-4">
+              <h3 className="text-base font-bold text-foreground">
                 {groupName || "Group Name Preview"}
               </h3>
-              <p className="mt-2 text-sm text-neutral-600">
+              <p className="mt-2 text-sm text-muted-foreground">
                 {description || "Your group description will appear here."}
               </p>
-              <div className="mt-4 inline-flex rounded-full bg-white px-3 py-1 text-xs font-medium text-neutral-700 shadow-sm">
+              <div className="mt-4 inline-flex rounded-full bg-card border border-border px-3 py-1 text-xs font-semibold text-foreground">
                 {isPublic ? "Public" : "Private"}
               </div>
             </div>
@@ -156,7 +156,7 @@ export default function CreateGroupPage() {
             <button
               onClick={handleUserGroupSubmit}
               disabled={loading || !groupName.trim()}
-              className="inline-flex h-12 items-center justify-center rounded-2xl bg-neutral-900 px-6 text-sm font-medium text-white transition-all hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]"
+              className="inline-flex h-11 items-center justify-center rounded-xl bg-foreground px-6 text-sm font-bold text-background transition-transform hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98] cursor-pointer"
             >
               {loading ? "Creating..." : "Create Group"}
             </button>

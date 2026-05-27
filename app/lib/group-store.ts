@@ -98,15 +98,22 @@ class UserGroupStore {
         return this.mapToUserGroup(userGroup);
     }
 
-    public async getUserGroupsForUser(userId: string, page: number = 1, pageSize: number = this.PAGE_SIZE): Promise<UserGroup[]> {
+    public async getUserGroupsForUser(userId: string, page: number = 1, pageSize: number = this.PAGE_SIZE): Promise<{
+        userGroups: UserGroup[],
+        totalUserGroups: number
+    }> {
         const offset = (page - 1) * pageSize;
 
-        const userGroupIds = await db.select({
-            groupId: groupMembersTable.groupId
-        }).from(groupMembersTable)
-            .where(eq(groupMembersTable.userId, userId))
-            .limit(pageSize)
-            .offset(offset);
+        const [userGroupIds, countResult] = await Promise.all([
+            db.select({
+                groupId: groupMembersTable.groupId
+            }).from(groupMembersTable)
+                .where(eq(groupMembersTable.userId, userId))
+                .limit(pageSize)
+                .offset(offset),
+            db.select({ count: sql<number>`cast(count(*) as integer)` }).from(groupMembersTable)
+                .where(eq(groupMembersTable.userId, userId))
+        ]);
 
         const userGroups: UserGroup[] = [];
 
@@ -116,7 +123,10 @@ class UserGroupStore {
             userGroups.push(this.mapToUserGroup(currentGroup));
         }
 
-        return userGroups;
+        return {
+            userGroups: userGroups,
+            totalUserGroups: countResult[0].count
+        };
     }
 
     public async requestUserGroupJoin(groupId: string, userId: string, note: string | null): Promise<boolean> {

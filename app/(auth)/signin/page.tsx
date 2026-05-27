@@ -2,8 +2,8 @@ import SignInForm from "@/components/SigninForm";
 
 export default function SignInPage() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center p-8">
+    <div className="mx-auto max-w-md w-full py-12 flex flex-col justify-center">
       <SignInForm />
-    </main>
+    </div>
   );
 }

@@ -111,22 +111,22 @@ export default function CreatePollPage() {
     };
 
     return (
-        <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-            <div className="overflow-hidden rounded-3xl border border-neutral-200 bg-white shadow-sm">
-                <div className="border-b border-neutral-100 px-6 py-5 sm:px-8">
-                    <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
+        <div className="mx-auto w-full max-w-2xl">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card">
+                <div className="border-b border-border px-6 py-5 sm:px-8">
+                    <h1 className="text-xl font-bold tracking-tight text-foreground">
                         Create Poll
                     </h1>
 
-                    <p className="mt-1 text-sm text-neutral-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                         Ask a question, add options, and let people vote.
                     </p>
                 </div>
 
-                <div className="space-y-8 px-6 py-6 sm:px-8">
+                <div className="space-y-6 px-6 py-6 sm:px-8">
                     {/* Question */}
-                    <div className="space-y-3">
-                        <label className="text-sm font-medium text-neutral-700">
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground">
                             Poll Question
                         </label>
 
@@ -135,20 +135,20 @@ export default function CreatePollPage() {
                             placeholder="What should we build next?"
                             value={question}
                             onChange={(e) => setQuestion(e.target.value)}
-                            className="h-12 w-full rounded-2xl border border-neutral-200 bg-white px-4 text-sm text-neutral-900 outline-none transition-all placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
+                            className="h-11 w-full rounded-xl border border-border bg-background px-4 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-foreground/20 focus:ring-1 focus:ring-foreground/20"
                         />
                     </div>
 
                     {/* Poll Media */}
-                    <div className="space-y-3">
-                        <label className="text-sm font-medium text-neutral-700">
+                    <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground">
                             Poll Media
                         </label>
 
-                        <div className="rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-5 transition-colors hover:border-neutral-400">
+                        <div className="rounded-xl border border-dashed border-border bg-secondary/10 p-5 transition-colors hover:border-foreground/20">
                             <input
                                 type="file"
-                                className="block w-full cursor-pointer text-sm text-neutral-600 file:mr-4 file:rounded-xl file:border-0 file:bg-neutral-900 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-neutral-700"
+                                className="block w-full cursor-pointer text-sm text-muted-foreground file:mr-4 file:rounded-lg file:border-0 file:bg-foreground file:px-4 file:py-2 file:text-xs file:font-bold file:text-background hover:file:opacity-90"
                                 onChange={async (e) => {
                                     if (e.target.files?.[0]) {
                                         const file = e.target.files[0];
@@ -164,7 +164,7 @@ export default function CreatePollPage() {
                             />
 
                             {mediaUrl && (
-                                <div className="mt-4 overflow-hidden rounded-2xl border border-neutral-200">
+                                <div className="mt-4 overflow-hidden rounded-xl border border-border">
                                     <img
                                         src={mediaUrl}
                                         alt="Poll media"
@@ -176,22 +176,22 @@ export default function CreatePollPage() {
                     </div>
 
                     {/* Poll Options */}
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-neutral-700">
+                            <label className="text-sm font-semibold text-foreground">
                                 Poll Options
                             </label>
 
-                            <span className="text-xs text-neutral-400">
+                            <span className="text-xs text-muted-foreground">
                                 Minimum 2 options
                             </span>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             {pollOptions.map((option, index) => (
                                 <div
                                     key={index}
-                                    className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4"
+                                    className="rounded-xl border border-border bg-secondary/10 p-4"
                                 >
                                     <div className="space-y-4">
                                         <input
@@ -205,12 +205,12 @@ export default function CreatePollPage() {
 
                                                 setPollOptions(newOptions);
                                             }}
-                                            className="h-11 w-full rounded-xl border border-neutral-200 bg-white px-4 text-sm outline-none transition-all placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
+                                            className="h-10 w-full rounded-lg border border-border bg-background px-4 text-sm text-foreground outline-none transition-all placeholder:text-muted-foreground focus:border-foreground/20 focus:ring-1 focus:ring-foreground/20"
                                         />
 
                                         <input
                                             type="file"
-                                            className="block w-full cursor-pointer text-sm text-neutral-600 file:mr-4 file:rounded-xl file:border-0 file:bg-white file:px-4 file:py-2 file:text-sm file:font-medium file:text-neutral-700 file:shadow-sm hover:file:bg-neutral-100"
+                                            className="block w-full cursor-pointer text-xs text-muted-foreground file:mr-4 file:rounded-lg file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-foreground hover:file:bg-muted"
                                             onChange={async (e) => {
                                                 if (e.target.files?.[0]) {
                                                     const file = e.target.files[0];
@@ -233,7 +233,7 @@ export default function CreatePollPage() {
                                         />
 
                                         {option.mediaUrl && (
-                                            <div className="overflow-hidden rounded-xl border border-neutral-200">
+                                            <div className="overflow-hidden rounded-xl border border-border">
                                                 <img
                                                     src={option.mediaUrl}
                                                     alt={`Option ${index + 1}`}
@@ -249,26 +249,26 @@ export default function CreatePollPage() {
                         <button
                             type="button"
                             onClick={handleAddOption}
-                            className="inline-flex items-center rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100"
+                            className="inline-flex items-center rounded-lg border border-border bg-card px-4 py-2 text-xs font-bold text-foreground transition-colors hover:bg-muted cursor-pointer"
                         >
                             + Add Option
                         </button>
                     </div>
 
                     {/* Poll Settings */}
-                    <div className="space-y-5 rounded-2xl border border-neutral-200 bg-neutral-50 p-5">
-                        <h2 className="text-sm font-semibold text-neutral-800">
+                    <div className="space-y-5 rounded-xl border border-border bg-secondary/10 p-5">
+                        <h2 className="text-sm font-bold text-foreground">
                             Poll Settings
                         </h2>
 
                         {/* Multi Vote */}
                         <label className="flex cursor-pointer items-center justify-between gap-4">
                             <div>
-                                <p className="text-sm font-medium text-neutral-800">
+                                <p className="text-sm font-semibold text-foreground">
                                     Allow Multiple Votes
                                 </p>
 
-                                <p className="text-xs text-neutral-500">
+                                <p className="text-xs text-muted-foreground mt-0.5">
                                     Users can vote on more than one option.
                                 </p>
                             </div>
@@ -281,16 +281,16 @@ export default function CreatePollPage() {
                                         !isMultiVotingAllowed
                                     )
                                 }
-                                className="h-5 w-5 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-300"
+                                className="h-5 w-5 rounded border-border text-foreground focus:ring-border bg-background"
                             />
                         </label>
 
                         {/* Closing Time */}
                         <div className="space-y-2">
-                            <label className="text-sm font-medium text-neutral-700">
+                            <label className="text-sm font-semibold text-foreground">
                                 Poll Closing Time
                             </label>
-                            <p className="text-xs text-neutral-500">By default, there is no closing time.</p>
+                            <p className="text-xs text-muted-foreground">By default, there is no closing time.</p>
 
                             <PollClosingTimePicker
                                 value={closingTime}
@@ -303,7 +303,7 @@ export default function CreatePollPage() {
                     <div className="flex justify-end">
                         <button
                             onClick={handlePollSubmit}
-                            className="inline-flex h-12 items-center justify-center rounded-2xl bg-neutral-900 px-6 text-sm font-medium text-white transition-all hover:bg-neutral-700 active:scale-[0.98]"
+                            className="inline-flex h-11 items-center justify-center rounded-xl bg-foreground px-6 text-sm font-bold text-background transition-transform hover:opacity-90 active:scale-[0.98] cursor-pointer"
                         >
                             Create Poll
                         </button>

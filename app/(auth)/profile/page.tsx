@@ -148,41 +148,58 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="rounded-2xl border p-6 shadow-sm">
-            <h1 className="text-2xl font-bold mb-4">Welcome, {session?.user?.name}!</h1>
+        <div className="rounded-2xl border border-border bg-card p-6 text-foreground">
+            <h1 className="text-xl font-bold tracking-tight mb-6">Welcome, {session?.user?.name}!</h1>
 
             <div className="space-y-4">
-                <input
-                    type="text"
-                    placeholder="Username"
-                    value={username}
-                    disabled={!isFirstTimeUser}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full px-4 py-2 border rounded"
-                />
-                <input
-                    type="text"
-                    placeholder="Header"
-                    value={header}
-                    onChange={(e) => setHeader(e.target.value)}
-                    className="w-full px-4 py-2 border rounded"
-                />
-                <textarea
-                    placeholder="Bio"
-                    value={bio}
-                    onChange={(e) => setBio(e.target.value)}
-                    className="w-full px-4 py-2 border rounded"
-                />
-                <label className="flex items-center space-x-2">
+                <div className="space-y-1">
+                    <label className="text-xs font-semibold text-muted-foreground px-1">Username</label>
+                    <input
+                        type="text"
+                        placeholder="Username"
+                        value={username}
+                        disabled={!isFirstTimeUser}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-border bg-background text-foreground rounded-xl outline-none focus:border-foreground/20 focus:ring-1 focus:ring-foreground/20 placeholder:text-muted-foreground text-sm disabled:opacity-50"
+                    />
+                </div>
+                
+                <div className="space-y-1">
+                    <label className="text-xs font-semibold text-muted-foreground px-1">Header Message</label>
+                    <input
+                        type="text"
+                        placeholder="Header"
+                        value={header}
+                        onChange={(e) => setHeader(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-border bg-background text-foreground rounded-xl outline-none focus:border-foreground/20 focus:ring-1 focus:ring-foreground/20 placeholder:text-muted-foreground text-sm"
+                    />
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-xs font-semibold text-muted-foreground px-1">Bio</label>
+                    <textarea
+                        placeholder="Bio"
+                        value={bio}
+                        onChange={(e) => setBio(e.target.value)}
+                        rows={4}
+                        className="w-full px-4 py-2.5 border border-border bg-background text-foreground rounded-xl outline-none focus:border-foreground/20 focus:ring-1 focus:ring-foreground/20 placeholder:text-muted-foreground text-sm"
+                    />
+                </div>
+
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-foreground py-1">
                     <input
                         type="checkbox"
                         checked={isPublic}
                         onChange={(e) => setIsPublic(e.target.checked)}
-                        className="form-checkbox"
+                        className="h-4 w-4 rounded border-border text-foreground focus:ring-border bg-background"
                     />
                     <span>Make my profile public</span>
                 </label>
-                <button className="px-4 py-2 bg-blue-500 text-white rounded" onClick={() => { isFirstTimeUser ? handleProfileCreate() : handleProfileUpdate() }}>
+
+                <button 
+                    className="w-full sm:w-auto px-5 py-2.5 bg-foreground text-background font-bold text-sm rounded-xl hover:opacity-90 active:scale-[0.99] transition-transform cursor-pointer" 
+                    onClick={() => { isFirstTimeUser ? handleProfileCreate() : handleProfileUpdate() }}
+                >
                     Update Profile
                 </button>
             </div>

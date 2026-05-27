@@ -35,18 +35,17 @@ export function FloatingReactionDock({
         <button
           type="button"
           aria-label="React"
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 bg-white text-lg shadow-sm transition-all duration-200 hover:scale-105 hover:shadow-md dark:border-neutral-800 dark:bg-neutral-900"
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-base transition-transform hover:scale-[1.03] active:scale-[0.97]"
         >
           {getEmoji(value ?? defaultReaction)}
         </button>
 
         <div
           className={[
-            "absolute top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-full border border-neutral-200 bg-white p-1 shadow-lg backdrop-blur-md transition-all duration-200",
+            "absolute top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-full border border-border bg-card p-1 shadow-sm backdrop-blur-md transition-all duration-150",
             "pointer-events-none opacity-0 scale-95 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:scale-100",
             "group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-focus-within:scale-100",
-            align === "right" ? "right-12 origin-right" : "left-12 origin-left",
-            "dark:border-neutral-800 dark:bg-neutral-950",
+            align === "right" ? "right-11 origin-right" : "left-11 origin-left",
           ].join(" ")}
         >
           {reactions.map((reaction) => {
@@ -60,10 +59,10 @@ export function FloatingReactionDock({
                 title={reaction}
                 onClick={() => onChange(reaction)}
                 className={[
-                  "flex h-9 w-9 items-center justify-center rounded-full text-lg transition-all duration-150",
-                  "hover:-translate-y-1 hover:bg-neutral-100 dark:hover:bg-neutral-800",
+                  "flex h-8 w-8 items-center justify-center rounded-full text-base transition-all duration-150",
+                  "hover:bg-muted",
                   active
-                    ? "scale-110 bg-neutral-100 ring-2 ring-neutral-300 dark:bg-neutral-800 dark:ring-neutral-600"
+                    ? "bg-muted ring-1 ring-border font-bold scale-[1.05]"
                     : "bg-transparent",
                 ].join(" ")}
               >

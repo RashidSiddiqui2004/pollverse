@@ -48,18 +48,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-*{
-  font-family: "Bricolage Grotesque", sans-serif;
-}
-
-.font-bold {
-  font-family: "Bricolage Grotesque", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 500;
-  font-style: normal;
-  font-variation-settings:
-    "wdth" 100;
-}
+/* Base font stack inherited from HTML layout via Geist */
 
 :root {
   --background: oklch(1 0 0);
@@ -134,10 +123,16 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
+}
+
+* {
+  font-family: "Bricolage Grotesque", sans-serif;
 }
