@@ -1,4 +1,4 @@
-import { userGroupStore } from '@/app/lib/group-store';
+import { userGroupStore } from '@/app/lib';
 import { NextResponse } from 'next/server';
 
 // Fetch all the public user groups

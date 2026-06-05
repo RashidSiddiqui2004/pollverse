@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pollStore } from '@/app/lib/poll-store';
+import { pollStore } from '@/app/lib';
 
 type RouteParams = {
     params: Promise<{ id: string }>;

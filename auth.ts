@@ -4,7 +4,7 @@ import GitHub from "next-auth/providers/github";
 import { db } from "@/app/lib/db";
 import { eq } from "drizzle-orm";
 import { usersTable } from "@/app/db/schema";
-import { userStore } from "@/app/lib/user-store";
+import { userStore } from "./app/lib";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {

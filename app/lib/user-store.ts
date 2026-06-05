@@ -1,6 +1,6 @@
-import { db } from './db';
 import { usersTable, followedUsersTable } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
+import { NeonHttpDatabase } from 'drizzle-orm/neon-http';
 
 export interface User {
     id: string;
@@ -16,13 +16,15 @@ export interface User {
     updatedAt: string | null;
 }
 
-class UserStore {
+export class UserStore {
+    private static db: NeonHttpDatabase;
     private static instance: UserStore;
 
     private constructor() { }
 
-    public static getInstance(): UserStore {
+    public static getInstance(db: NeonHttpDatabase): UserStore {
         if (!UserStore.instance) {
+            this.db = db;
             UserStore.instance = new UserStore();
         }
         return UserStore.instance;
@@ -54,7 +56,7 @@ class UserStore {
             throw new Error("Name, username, and email are required fields.");
         }
 
-        const [inserted] = await db.insert(usersTable).values({
+        const [inserted] = await UserStore.db.insert(usersTable).values({
             name: data.name,
             userName: data.userName,
             email: data.email,
@@ -68,28 +70,32 @@ class UserStore {
         return this.mapToUser(inserted);
     }
 
+    public async deleteUser(userId: string) : Promise<void> {
+        await UserStore.db.delete(usersTable).where(eq(usersTable.id, userId));
+    }
+
     public async getUserById(userId: string): Promise<User | null> {
-        const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+        const [user] = await UserStore.db.select().from(usersTable).where(eq(usersTable.id, userId));
         return user ? this.mapToUser(user) : null;
     }
 
     public async getUserByUsername(userName: string): Promise<User | null> {
-        const [user] = await db.select().from(usersTable).where(eq(usersTable.userName, userName));
+        const [user] = await UserStore.db.select().from(usersTable).where(eq(usersTable.userName, userName));
         return user ? this.mapToUser(user) : null;
     }
 
     public async getUserByEmail(email: string): Promise<User | null> {
-        const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+        const [user] = await UserStore.db.select().from(usersTable).where(eq(usersTable.email, email));
         return user ? this.mapToUser(user) : null;
     }
 
     public async checkIfExistsByEmail(email: string): Promise<boolean> {
-        const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
+        const [user] = await UserStore.db.select().from(usersTable).where(eq(usersTable.email, email));
         return Boolean(user);
     }
 
     public async checkIfExistsByUsername(userName: string): Promise<boolean> {
-        const [user] = await db.select().from(usersTable).where(eq(usersTable.userName, userName));
+        const [user] = await UserStore.db.select().from(usersTable).where(eq(usersTable.userName, userName));
         return Boolean(user);
     }
 
@@ -101,7 +107,7 @@ class UserStore {
         bio: string;
         isPublic: boolean;
     }>): Promise<User> {
-        const [updated] = await db.update(usersTable)
+        const [updated] = await UserStore.db.update(usersTable)
             .set({
                 ...data,
                 updatedAt: new Date()
@@ -120,7 +126,7 @@ class UserStore {
             throw new Error("Users cannot follow themselves.");
         }
 
-        const [existing] = await db.select().from(followedUsersTable)
+        const [existing] = await UserStore.db.select().from(followedUsersTable)
             .where(and(
                 eq(followedUsersTable.followerId, followerId),
                 eq(followedUsersTable.followingId, followingId)
@@ -130,7 +136,7 @@ class UserStore {
             return true;
         }
 
-        await db.insert(followedUsersTable).values({
+        await UserStore.db.insert(followedUsersTable).values({
             followerId,
             followingId,
         });
@@ -139,7 +145,7 @@ class UserStore {
     }
 
     public async unfollowUser(followerId: string, followingId: string): Promise<boolean> {
-        await db.delete(followedUsersTable)
+        await UserStore.db.delete(followedUsersTable)
             .where(and(
                 eq(followedUsersTable.followerId, followerId),
                 eq(followedUsersTable.followingId, followingId)
@@ -148,7 +154,7 @@ class UserStore {
     }
 
     public async isFollowing(followerId: string, followingId: string): Promise<boolean> {
-        const [follow] = await db.select().from(followedUsersTable)
+        const [follow] = await UserStore.db.select().from(followedUsersTable)
             .where(and(
                 eq(followedUsersTable.followerId, followerId),
                 eq(followedUsersTable.followingId, followingId)
@@ -156,5 +162,3 @@ class UserStore {
         return Boolean(follow);
     }
 }
-
-export const userStore = UserStore.getInstance();

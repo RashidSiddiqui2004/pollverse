@@ -2,6 +2,7 @@ import { db } from './db';
 import { pollsTable, pollsOptionsTable, votesTable, followedUsersTable, userGroupsTable, groupMembersTable, usersTable, reactionsTable } from '../db/schema';
 import { desc, sql, eq, gt, and, or, isNull } from 'drizzle-orm';
 import { ReactionType } from '../utils/reactions';
+import { NeonHttpDatabase } from 'drizzle-orm/neon-http';
 
 export interface Poll {
     id: string,
@@ -31,7 +32,8 @@ export const activePollsFilter = or(
     isNull(pollsTable.closingTime)
 );
 
-class PollStore {
+export class PollStore {
+    private static db: NeonHttpDatabase;
     private PAGE_SIZE: number;
     private static instance: PollStore;
 
@@ -39,8 +41,9 @@ class PollStore {
         this.PAGE_SIZE = 6;
     }
 
-    public static getInstance(): PollStore {
+    public static getInstance(db: NeonHttpDatabase): PollStore {
         if (!PollStore.instance) {
+            this.db = db;
             PollStore.instance = new PollStore();
         }
         return PollStore.instance;
@@ -78,7 +81,7 @@ class PollStore {
             throw new Error("Poll validation failed, please check your inputs.");
         }
 
-        const [inserted] = await db.insert(pollsTable).values({
+        const [inserted] = await PollStore.db.insert(pollsTable).values({
             question,
             mediaUrl,
             userId,
@@ -91,7 +94,7 @@ class PollStore {
     }
 
     public async createPollOption(pollId: string, text: string, mediaUrl: string | null): Promise<PollOption> {
-        const [inserted] = await db.insert(pollsOptionsTable).values({
+        const [inserted] = await PollStore.db.insert(pollsOptionsTable).values({
             pollId,
             text,
             mediaUrl
@@ -122,7 +125,7 @@ class PollStore {
 
         // Populate corresponding options data in each poll 
         for (const poll of data) {
-            const pollOptions = await db.select().from(pollsOptionsTable)
+            const pollOptions = await PollStore.db.select().from(pollsOptionsTable)
                 .where(eq(pollsOptionsTable.pollId, poll.id));
             allPolls.push(this.mapToPoll(poll, pollOptions.map(this.mapToPollOption)));
         }
@@ -156,7 +159,7 @@ class PollStore {
             .groupBy(reactionsTable.pollId)
             .as("reaction_counts");
 
-        const trendingPollsData = await db
+        const trendingPollsData = await PollStore.db
             .select({
                 poll: pollsTable,
                 voteCount: sql<number>`coalesce(${voteCounts.voteCount}, 0)`.as("vote_count"),
@@ -184,7 +187,7 @@ class PollStore {
 
         // Populate corresponding options data in each poll 
         for (const poll of trendingPollsData) {
-            const pollOptions = await db.select().from(pollsOptionsTable)
+            const pollOptions = await PollStore.db.select().from(pollsOptionsTable)
                 .where(eq(pollsOptionsTable.pollId, poll.poll.id));
             trendingPolls.push(this.mapToPoll(poll.poll, pollOptions.map(this.mapToPollOption)));
         }
@@ -214,7 +217,7 @@ class PollStore {
 
         // Populate corresponding options data in each poll
         for (const poll of data) {
-            const pollOptions = await db.select().from(pollsOptionsTable)
+            const pollOptions = await PollStore.db.select().from(pollsOptionsTable)
                 .where(eq(pollsOptionsTable.pollId, poll.id));
             allPolls.push(this.mapToPoll(poll, pollOptions.map(this.mapToPollOption)));
         }
@@ -226,7 +229,7 @@ class PollStore {
     }
 
     public async getPollById(userId: string, pollId: string): Promise<Poll> {
-        const [poll] = await db.select().from(pollsTable)
+        const [poll] = await PollStore.db.select().from(pollsTable)
             .where(eq(pollsTable.id, pollId));
 
         if (!poll) {
@@ -242,13 +245,13 @@ class PollStore {
         if (!isAuthorized) {
             if (!poll.groupId) {
                 // 1. Check if the user is following the poll's owner
-                const [user] = await db.select().from(usersTable)
+                const [user] = await PollStore.db.select().from(usersTable)
                     .where(eq(usersTable.id, poll.userId));
                 if (user.isPublic) {
                     isAuthorized = true;
                     // 2. OR the user is following the poll's owner
                 } else {
-                    const [followedUser] = await db.select().from(followedUsersTable)
+                    const [followedUser] = await PollStore.db.select().from(followedUsersTable)
                         .where(and(eq(followedUsersTable.followerId, userId), eq(followedUsersTable.followingId, poll.userId)));
                     if (followedUser) {
                         isAuthorized = true;
@@ -257,14 +260,14 @@ class PollStore {
             }
             // 3. Check if the poll's group is public  
             else if (poll.groupId) {
-                const [group] = await db.select().from(userGroupsTable)
+                const [group] = await PollStore.db.select().from(userGroupsTable)
                     .where(eq(userGroupsTable.id, poll.groupId));
                 if (group.isPublic) {
                     isAuthorized = true;
                 }
                 // 4. OR the user is a member of the poll's group
             } else {
-                const [groupMember] = await db.select().from(groupMembersTable)
+                const [groupMember] = await PollStore.db.select().from(groupMembersTable)
                     .where(and(eq(groupMembersTable.groupId, poll.groupId), eq(groupMembersTable.userId, userId)));
                 if (groupMember) {
                     isAuthorized = true;
@@ -276,7 +279,7 @@ class PollStore {
             throw new Error("You are not authorized to view this poll");
         }
 
-        const pollOptions = await db.select().from(pollsOptionsTable)
+        const pollOptions = await PollStore.db.select().from(pollsOptionsTable)
             .where(eq(pollsOptionsTable.pollId, pollId));
 
         return this.mapToPoll(poll, pollOptions.map(this.mapToPollOption));
@@ -284,14 +287,14 @@ class PollStore {
 
     public async votePollOption(userId: string, pollId: string, optionId: number): Promise<boolean> {
         // Check if user has already voted for this poll option.
-        const [vote] = await db.select().from(votesTable)
+        const [vote] = await PollStore.db.select().from(votesTable)
             .where(and(eq(votesTable.userId, userId), eq(votesTable.optionId, optionId)));
 
         if (vote) {
             throw new Error("You have already voted for this poll option.");
         }
 
-        const [poll] = await db.select().from(pollsTable)
+        const [poll] = await PollStore.db.select().from(pollsTable)
             .where(eq(pollsTable.id, pollId));
 
         if (!poll) {
@@ -310,7 +313,7 @@ class PollStore {
         // Otherwise, user can cast their vote.
 
         // Add vote to the option.
-        await db.insert(votesTable).values({
+        await PollStore.db.insert(votesTable).values({
             userId: userId,
             pollId: pollId,
             optionId: optionId
@@ -318,7 +321,7 @@ class PollStore {
 
         // Update vote count of the option.
         // This should be an atomic operation. (Handle concurent votes)
-        await db.update(pollsOptionsTable).set({
+        await PollStore.db.update(pollsOptionsTable).set({
             voteCount: sql`${pollsOptionsTable.voteCount} + 1`
         }).where(eq(pollsOptionsTable.id, optionId));
 
@@ -326,7 +329,7 @@ class PollStore {
     }
 
     public async deletePoll(userId: string, pollId: string): Promise<boolean> {
-        const [fetchedPoll] = await db.select().from(pollsTable)
+        const [fetchedPoll] = await PollStore.db.select().from(pollsTable)
             .where(eq(pollsTable.id, pollId));
 
         // Check if poll exists.
@@ -339,12 +342,12 @@ class PollStore {
             throw new Error("You are not authorized to delete this poll");
         }
 
-        await db.delete(pollsTable).where(eq(pollsTable.id, pollId));
+        await PollStore.db.delete(pollsTable).where(eq(pollsTable.id, pollId));
         return true;
     };
 
     public async checkIfUserVoted(userId: string, pollId: string): Promise<boolean> {
-        const [existingVote] = await db.select().from(votesTable)
+        const [existingVote] = await PollStore.db.select().from(votesTable)
             .where(and(eq(votesTable.userId, userId), eq(votesTable.pollId, pollId)));
         return Boolean(existingVote);
     }
@@ -353,11 +356,11 @@ class PollStore {
         // Delete previous reaction on the poll.
         const existingReaction = await this.getUserReactionOnPoll(userId, pollId);
         if (existingReaction) {
-            await db.delete(reactionsTable)
+            await PollStore.db.delete(reactionsTable)
                 .where(and(eq(reactionsTable.userId, userId), eq(reactionsTable.pollId, pollId)));
         }
         // Add reaction to the poll.
-        await db.insert(reactionsTable).values({
+        await PollStore.db.insert(reactionsTable).values({
             userId: userId,
             pollId: pollId,
             reactionType: reaction
@@ -366,7 +369,7 @@ class PollStore {
     }
 
     public async getUserReactionOnPoll(userId: string, pollId: string): Promise<string | null> {
-        const [reaction] = await db.select().from(reactionsTable)
+        const [reaction] = await PollStore.db.select().from(reactionsTable)
             .where(and(eq(reactionsTable.userId, userId), eq(reactionsTable.pollId, pollId)));
 
         if (!reaction) {
@@ -380,11 +383,11 @@ class PollStore {
         // Delete previous reaction on the poll option.
         const existingReaction = await this.getUserReactionOnPollOption(userId, optionId);
         if (existingReaction) {
-            await db.delete(reactionsTable)
+            await PollStore.db.delete(reactionsTable)
                 .where(and(eq(reactionsTable.userId, userId), eq(reactionsTable.optionId, optionId)));
         }
         // Add reaction to the poll option.
-        await db.insert(reactionsTable).values({
+        await PollStore.db.insert(reactionsTable).values({
             userId: userId,
             optionId: optionId,
             reactionType: reaction
@@ -393,7 +396,7 @@ class PollStore {
     }
 
     public async getUserReactionOnPollOption(userId: string, optionId: number): Promise<string | null> {
-        const [reaction] = await db.select().from(reactionsTable)
+        const [reaction] = await PollStore.db.select().from(reactionsTable)
             .where(and(eq(reactionsTable.userId, userId), eq(reactionsTable.optionId, optionId)));
 
         if (!reaction) {
@@ -403,5 +406,3 @@ class PollStore {
         return reaction.reactionType;
     }
 };
-
-export const pollStore = PollStore.getInstance();

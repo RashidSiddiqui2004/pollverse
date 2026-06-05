@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pollStore } from '@/app/lib/poll-store';
-
+import { pollStore } from '@/app/lib';
 export async function POST(request: Request) {
     try {
         const body = await request.json();

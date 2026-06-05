@@ -1,5 +1,5 @@
+import { userStore } from "@/app/lib";
 import { auth } from "@/auth";
-import { userStore } from "@/app/lib/user-store";
 import { redirect } from "next/navigation";
 
 export default async function PostAuthPage() {

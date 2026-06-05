@@ -1,6 +1,7 @@
 import { db } from './db';
 import { groupJoinRequestsTable, groupMembersTable, userGroupsTable } from '../db/schema';
 import { eq, and, desc, sql } from 'drizzle-orm';
+import { NeonHttpDatabase } from 'drizzle-orm/neon-http';
 
 export interface UserGroup {
     id: string;
@@ -11,8 +12,9 @@ export interface UserGroup {
     createdAt: string;
     updatedAt: string | null;
 };
-
-class UserGroupStore {
+ 
+export class UserGroupStore {
+    private static db: NeonHttpDatabase;
     private PAGE_SIZE: number;
     private static instance: UserGroupStore;
 
@@ -20,8 +22,9 @@ class UserGroupStore {
         this.PAGE_SIZE = 6;
     }
 
-    public static getInstance(): UserGroupStore {
+    public static getInstance(db: NeonHttpDatabase): UserGroupStore {
         if (!UserGroupStore.instance) {
+            this.db = db;
             UserGroupStore.instance = new UserGroupStore();
         }
         return UserGroupStore.instance;
@@ -48,7 +51,7 @@ class UserGroupStore {
             throw new Error("Group name is required.");
         }
 
-        const [inserted] = await db.insert(userGroupsTable).values({
+        const [inserted] = await UserGroupStore.db.insert(userGroupsTable).values({
             groupName: data.groupName,
             description: data.description,
             adminId: data.adminId,
@@ -88,7 +91,7 @@ class UserGroupStore {
     }
 
     public async getUserGroupById(groupId: string): Promise<UserGroup> {
-        const [userGroup] = await db.select().from(userGroupsTable)
+        const [userGroup] = await UserGroupStore.db.select().from(userGroupsTable)
             .where(eq(userGroupsTable.id, groupId));
 
         if (!userGroup) {
@@ -118,7 +121,7 @@ class UserGroupStore {
         const userGroups: UserGroup[] = [];
 
         for (const userGroupId of userGroupIds) {
-            const [currentGroup] = await db.select().from(userGroupsTable)
+            const [currentGroup] = await UserGroupStore.db.select().from(userGroupsTable)
                 .where(eq(userGroupsTable.id, userGroupId.groupId));
             userGroups.push(this.mapToUserGroup(currentGroup));
         }
@@ -131,7 +134,7 @@ class UserGroupStore {
 
     public async requestUserGroupJoin(groupId: string, userId: string, note: string | null): Promise<boolean> {
         // Check if the group is public.
-        const [userGroup] = await db.select().from(userGroupsTable)
+        const [userGroup] = await UserGroupStore.db.select().from(userGroupsTable)
             .where(eq(userGroupsTable.id, groupId));
 
         if (!userGroup) {
@@ -144,7 +147,7 @@ class UserGroupStore {
         }
         else {
             // Send join request to group admin.
-            await db.insert(groupJoinRequestsTable).values({
+            await UserGroupStore.db.insert(groupJoinRequestsTable).values({
                 userId,
                 groupId,
                 note
@@ -155,7 +158,7 @@ class UserGroupStore {
 
     public async joinUserGroup(groupId: string, userId: string): Promise<boolean> {
         // Check if already a member of the UserGroup.
-        const [member] = await db.select().from(groupMembersTable)
+        const [member] = await UserGroupStore.db.select().from(groupMembersTable)
             .where(and(eq(groupMembersTable.groupId, groupId), eq(groupMembersTable.userId, userId)));
 
         if (Boolean(member)) {
@@ -163,7 +166,7 @@ class UserGroupStore {
         }
 
         // Add user to the UserGroup
-        await db.insert(groupMembersTable).values({
+        await UserGroupStore.db.insert(groupMembersTable).values({
             userId,
             groupId
         });
@@ -172,7 +175,7 @@ class UserGroupStore {
     }
 
     public async acceptJoinRequest(groupId: string, userId: string, acceptedUserId: string): Promise<boolean> {
-        const [userGroup] = await db.select().from(userGroupsTable)
+        const [userGroup] = await UserGroupStore.db.select().from(userGroupsTable)
             .where(eq(userGroupsTable.id, groupId));
 
         if (!userGroup) {
@@ -192,7 +195,7 @@ class UserGroupStore {
     }
 
     public async rejectJoinRequest(groupId: string, userId: string, rejectedUserId: string): Promise<boolean> {
-        const [userGroup] = await db.select().from(userGroupsTable)
+        const [userGroup] = await UserGroupStore.db.select().from(userGroupsTable)
             .where(eq(userGroupsTable.id, groupId));
 
         if (!userGroup) {
@@ -209,17 +212,15 @@ class UserGroupStore {
     }
 
     public async deleteJoinRequest(groupId: string, userId: string): Promise<boolean> {
-        const [userGroup] = await db.select().from(userGroupsTable)
+        const [userGroup] = await UserGroupStore.db.select().from(userGroupsTable)
             .where(eq(userGroupsTable.id, groupId));
 
         if (!userGroup) {
             throw new Error("No user group found!")
         }
 
-        await db.delete(groupJoinRequestsTable)
+        await UserGroupStore.db.delete(groupJoinRequestsTable)
             .where(and(eq(groupJoinRequestsTable.groupId, groupId), eq(groupJoinRequestsTable.userId, userId)));
         return true;
     }
 };
-
-export const userGroupStore = UserGroupStore.getInstance();

@@ -1,5 +1,5 @@
+import { userStore } from '@/app/lib';
 import { NextResponse } from 'next/server';
-import { userStore } from '@/app/lib/user-store';
 
 type RouteContext = {
     params: Promise<{ email: string }>;

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pollStore } from '@/app/lib/poll-store';
-import { userStore } from '@/app/lib/user-store';
+import { pollStore, userStore } from '@/app/lib';
 
 export async function GET(request: Request) {
     try {

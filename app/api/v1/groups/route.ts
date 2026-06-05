@@ -1,5 +1,4 @@
-import { userGroupStore } from '@/app/lib/group-store';
-import { userStore } from '@/app/lib/user-store';
+import { userGroupStore, userStore } from '@/app/lib';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {

@@ -1,5 +1,5 @@
+import { userStore } from '@/app/lib';
 import { NextResponse } from 'next/server';
-import { userStore } from '@/app/lib/user-store';
 
 export async function GET(request: Request) {
     try {

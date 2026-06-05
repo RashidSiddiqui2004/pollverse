@@ -3,5 +3,5 @@ import { drizzle, NeonHttpDatabase } from "drizzle-orm/neon-http";
 import * as dotenv from 'dotenv';
 dotenv.config();
 
-const sql = neon(process.env.DATABASE_URL!);
-export const db: NeonHttpDatabase = drizzle(sql);
+const testsql = neon(process.env.TEST_DATABASE_URL!);
+export const testdb: NeonHttpDatabase = drizzle(testsql);
